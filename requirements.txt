@@ -1,8 +1,5 @@
-# ── core deps ───────────────────────────────────────────
 Flask
 Flask-SocketIO[eventlet]
-eventlet>=0.33           # added explicitly to guarantee presence
+eventlet>=0.33
 paho-mqtt==1.6.1
-
-# ── production server ──────────────────────────────────
 gunicorn

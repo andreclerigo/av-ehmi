@@ -35,7 +35,6 @@ html, body {
     background-color: #66FF00;
 }
 
-/* Hide elements by default by making them transparent */
 #stop-text.hidden, #go-text.hidden {
     opacity: 0;
 }
