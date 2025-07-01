@@ -1,0 +1,10 @@
+*.pyc
+__pycache__/
+instance/
+.webassets-cache
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+ENV/
