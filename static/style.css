@@ -1,0 +1,34 @@
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.section {
+    width: 100%;
+    height: 50vh; /* 50% of the viewport height */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 15vw; /* Responsive font size */
+    font-weight: bold;
+    color: white;
+    text-align: center;
+    transition: opacity 0.3s ease-in-out;
+}
+
+#stop-section {
+    background-color: #FF0000; /* Bright Red */
+}
+
+#go-section {
+    background-color: #66FF00; /* Bright Green */
+}
+
+/* Hide elements by default by making them transparent */
+#stop-text.hidden, #go-text.hidden {
+    opacity: 0;
+}
