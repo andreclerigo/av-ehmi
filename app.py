@@ -1,80 +1,80 @@
+import eventlet
+eventlet.monkey_patch()
+
 import json
-import threading
-import time
+import traceback
 from flask import Flask, render_template
 from flask_socketio import SocketIO
 import paho.mqtt.client as mqtt
 
-# --- Configuration ---
-MQTT_BROKER = "atcll-services.nap.av.it.pt"
-MQTT_PORT = 1884
+# --- Configuration -----------------------------------------------------------
+MQTT_BROKER   = "atcll-services.nap.av.it.pt"
+MQTT_PORT     = 1884
 MQTT_USERNAME = "atcll-services"
 MQTT_PASSWORD = "bWAoaB&6kQ#pjE9@Dv2opvjDiyxKsw"
-MQTT_TOPIC = "obu157/vanetza/time/cam_full"
+MQTT_TOPIC    = "obu157/vanetza/time/cam_full"
 
-# --- App Initialization ---
+# --- App initialisation ------------------------------------------------------
 app = Flask(__name__)
-# In a production environment, you'd want a more secure secret key
-app.config['SECRET_KEY'] = 'secret!'
-# Use async_mode='threading' to work well with the Paho MQTT client's blocking loop
-socketio = SocketIO(app, async_mode='threading')
+app.config["SECRET_KEY"] = "secret-key"          # change in production
+socketio = SocketIO(app, async_mode="eventlet")  # must match Gunicorn worker
 
-# --- Vehicle State ---
-# This will hold the latest speed. No lock needed for this simple case as updates
-# are managed in a single MQTT thread and read by SocketIO events.
-vehicle_state = {"speed": 0}
+# --- Vehicle state -----------------------------------------------------------
+vehicle_state = {"speed": 1}
 
-# --- MQTT Client Setup ---
+# --- MQTT client -------------------------------------------------------------
+client = mqtt.Client()
+
 def on_connect(client, userdata, flags, rc):
     if rc == 0:
         print("Successfully connected to MQTT broker.")
         client.subscribe(MQTT_TOPIC)
     else:
-        print(f"Failed to connect, return code {rc}")
+        print(f"Failed to connect to MQTT broker, return code {rc}")
 
 def on_message(client, userdata, msg):
     global vehicle_state
     try:
-        data = json.loads(msg.payload.decode('utf-8'))
-        speed = data["fields"]["cam"]["camParameters"]["highFrequencyContainer"]["basicVehicleContainerHighFrequency"]["speed"]["speedValue"]
+        data   = json.loads(msg.payload.decode("utf-8"))
+        speed  = (data["fields"]["cam"]
+                      ["camParameters"]["highFrequencyContainer"]
+                      ["basicVehicleContainerHighFrequency"]["speed"]["speedValue"])
         vehicle_state["speed"] = speed
-        
-        # A new message has arrived, so push it to all connected clients instantly.
-        socketio.emit('status_update', {'speed': speed})
-        
+        socketio.emit("status_update", {"speed": speed})
         print(f"Received speed: {speed} -> Pushed to clients")
     except (json.JSONDecodeError, KeyError) as e:
         print(f"Failed to parse JSON or find key: {e}")
 
-def mqtt_thread_target():
-    client = mqtt.Client()
+def mqtt_background_thread():
+    print("Initializing MQTT client for background thread.")
     client.username_pw_set(MQTT_USERNAME, MQTT_PASSWORD)
     client.on_connect = on_connect
     client.on_message = on_message
 
-    client.connect(MQTT_BROKER, MQTT_PORT, 60)
-    client.loop_forever()
+    while True:                              # auto-reconnect loop
+        try:
+            client.connect(MQTT_BROKER, MQTT_PORT, 60)
+            client.loop_forever()            # blocks until connection drops
+        except Exception as e:
+            print("MQTT thread crashed:", e)
+            traceback.print_exc()            # full stack trace
+            print("Re-trying in 5 s …")
+            eventlet.sleep(5)                # don’t burn CPU in a tight loop
 
-# --- Flask Routes ---
-@app.route('/')
+# --- Flask routes ------------------------------------------------------------
+@app.route("/")
 def index():
-    """Serve the main eHMI page."""
-    return render_template('index.html')
+    return render_template("index.html")
 
-# --- SocketIO Events ---
-@socketio.on('connect')
+# --- Socket.IO events --------------------------------------------------------
+@socketio.on("connect")
 def handle_connect():
-    """A client connected. Send them the current status immediately."""
-    print("Client connected")
-    # Send the last known status to the newly connected client
-    socketio.emit('status_update', {'speed': vehicle_state['speed']})
+    print("Web client connected")
+    socketio.emit("status_update", {"speed": vehicle_state["speed"]})
 
-# --- Main Execution ---
-if __name__ == '__main__':
-    # Start the MQTT client in a separate thread
-    mqtt_thread = threading.Thread(target=mqtt_thread_target, daemon=True)
-    mqtt_thread.start()
+# --- Start background MQTT worker as soon as the module is imported ----------
+socketio.start_background_task(target=mqtt_background_thread)
 
-    # Run the Flask-SocketIO web server
-    print("Starting Flask-SocketIO server...")
-    socketio.run(app, host='0.0.0.0', port=5003)
+if __name__ == "__main__":
+    print("Starting server in debug mode …")
+    socketio.run(app, host="0.0.0.0", port=5003, debug=True)
