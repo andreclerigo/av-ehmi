@@ -34,21 +34,35 @@ socket.on('connect_error', (error) => {
 });
 
 // --- Real-time Status Updates ---
-socket.on('status_update', (data) => {
-    console.log(`Received status update:`, data);
-    const speed = data.speed;
+socket.on("status_update", (data) => {
+  console.log(`Received status update:`, data);
+  const speed = data.speed;
 
-    if (speed > 0) {
-        // Vehicle is MOVING -> Show STOP
-        stopText.classList.remove('hidden');
-        goText.classList.add('hidden');
-        stopSection.style.backgroundColor = "#FF0000"; // Red
-        goSection.style.backgroundColor = '#6c757d';   // Gray
-    } else {
-        // Vehicle is STOPPED -> Show GO
-        stopText.classList.add('hidden');
-        goText.classList.remove('hidden');
-        stopSection.style.backgroundColor = '#6c757d';   // Gray
-        goSection.style.backgroundColor = "#66FF00"; // Green
-    }
+  if (speed > 0) {
+    // Vehicle is MOVING -> Show STOP
+    stopText.classList.remove("hidden");
+    goText.classList.add("hidden");
+
+    stopSection.style.backgroundColor = "#FF0000"; // Red
+    goSection.style.backgroundColor = "#6c757d"; // Gray
+
+    stopSection.classList.add("large");
+    stopSection.classList.remove("small");
+
+    goSection.classList.add("small");
+    goSection.classList.remove("large");
+  } else {
+    // Vehicle is STOPPED -> Show GO
+    stopText.classList.add("hidden");
+    goText.classList.remove("hidden");
+
+    stopSection.style.backgroundColor = "#6c757d"; // Gray
+    goSection.style.backgroundColor = "#66FF00"; // Green
+
+    stopSection.classList.add("small");
+    stopSection.classList.remove("large");
+
+    goSection.classList.add("large");
+    goSection.classList.remove("small");
+  }
 });

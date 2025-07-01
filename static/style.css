@@ -9,23 +9,30 @@ html, body {
 
 .section {
     width: 100%;
-    height: 50vh; /* 50% of the viewport height */
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 15vw; /* Responsive font size */
+    font-size: 20vw;
     font-weight: bold;
     color: white;
     text-align: center;
-    transition: opacity 0.3s ease-in-out;
+    overflow: hidden;
+}
+
+.section.large {
+    height: 60vh;
+}
+
+.section.small {
+    height: 40vh;
 }
 
 #stop-section {
-    background-color: #FF0000; /* Bright Red */
+    background-color: #FF0000;
 }
 
 #go-section {
-    background-color: #66FF00; /* Bright Green */
+    background-color: #66FF00;
 }
 
 /* Hide elements by default by making them transparent */
