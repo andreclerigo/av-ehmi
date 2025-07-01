@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  ehmi:
+    # Build the Docker image from the Dockerfile in the current directory
+    build: .
+    # Name the container
+    container_name: ehmi-app
+    # Restart the container automatically if it stops
+    restart: unless-stopped
+    # Map port 5003 on the host (your Raspberry Pi) to port 5003 in the container
+    ports:
+      - "5003:5003"
+    # Use the host network to make it easier to connect to the MQTT broker
+    # on the local network. This is simpler for this use case than creating a custom bridge network.
+    network_mode: "host"
+    # Add a healthcheck to ensure the container is running correctly
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5003"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
