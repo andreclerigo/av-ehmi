@@ -1,13 +1,15 @@
-version: '3.8'
-
 services:
   ehmi:
     image: andreclerigo/av-ehmi:latest
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile
     container_name: ehmi-app
     restart: unless-stopped
     ports:
       - "5003:5003"
-    network_mode: "host"
+    environment:
+      PYTHONUNBUFFERED: 1
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5003"]
       interval: 30s
